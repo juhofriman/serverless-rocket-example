@@ -1,0 +1,143 @@
+# Your service name
+service: understand-backend
+
+plugins:
+  - serverless-offline
+
+# You can pin your service to only deploy with a specific Serverless version
+# Check out our docs for more details
+# frameworkVersion: "=X.X.X"
+
+provider:
+  name: aws
+  runtime: nodejs6.10
+  region: eu-west-1
+  stage: dev
+  # If you need AWS sdk in your backend, define role statements here
+  #iamRoleStatements:
+  #    -  Effect: "Allow"
+  #       Action:
+  #         - "comprehend:DetectEntities"
+  #       Resource: "*"
+  environment:
+    # This can be used with Cloudfront to pass traffic to lambda via api gateway
+    ENDPOINT: { "Fn::Join" : ["", [ { "Ref" : "ApiGatewayRestApi" }, ".execute-api.${self:provider.region}.amazonaws.com" ] ]  }
+
+custom:
+  serverless-offline:
+    port: 3001
+    corsAllowOrigin: localhost:3000
+
+functions:
+  send:
+    handler: handler.send
+    events:
+      - http:
+          path: api/send
+          method: post
+
+resources:
+  Resources:
+
+    RocketSiteBucket:
+      Type: AWS::S3::Bucket
+
+    OriginAccessIdentity:
+      Type: "AWS::CloudFront::CloudFrontOriginAccessIdentity"
+      Properties:
+        CloudFrontOriginAccessIdentityConfig:
+          Comment: "Origin Access Identity for rrocket site s3 bucket"
+
+    RocketSiteBucketBucketPolicy:
+      Type: "AWS::S3::BucketPolicy"
+      Properties:
+        Bucket:
+          Ref: "RocketSiteBucket"
+        PolicyDocument:
+          Statement:
+            -
+              Action:
+                - "s3:GetObject"
+              Effect: "Allow"
+              Resource:
+                Fn::Join:
+                  - ""
+                  - - Fn::GetAtt: [ RocketSiteBucket, Arn]
+                    - "/*"
+              Principal:
+                CanonicalUser:
+                  Fn::GetAtt: [ OriginAccessIdentity, S3CanonicalUserId ]
+
+    RocketCloudfront:
+      Type: AWS::CloudFront::Distribution
+      Properties:
+        DistributionConfig:
+          Origins:
+            -
+              DomainName:
+                Fn::GetAtt: [ RocketSiteBucket, DomainName ]
+              Id: rocket-site
+              S3OriginConfig:
+                OriginAccessIdentity:
+                  Fn::Join:
+                    - ""
+                    - - "origin-access-identity/cloudfront/"
+                      - Ref: OriginAccessIdentity
+
+            -
+              DomainName: ${self:provider.environment.ENDPOINT}
+              Id: rocket-api
+              OriginPath: "/dev" # Note: this MUST equal stage in serverless!
+              CustomOriginConfig:
+                HTTPPort: 80
+                HTTPSPort: 443
+                OriginProtocolPolicy: https-only
+
+          Enabled: 'true'
+
+          DefaultRootObject: index.html
+
+          DefaultCacheBehavior:
+            AllowedMethods:
+            - GET
+            - HEAD
+            TargetOriginId: rocket-site
+            MaxTTL: 10
+            MinTTL: 10
+            DefaultTTL: 10
+            ForwardedValues:
+              QueryString: 'false'
+              Cookies:
+                Forward: none
+            ViewerProtocolPolicy: redirect-to-https
+
+          CacheBehaviors:
+            - AllowedMethods:
+              - HEAD
+              - DELETE
+              - POST
+              - GET
+              - OPTIONS
+              - PUT
+              - PATCH
+              TargetOriginId: rocket-api
+              MaxTTL: 0
+              MinTTL: 0
+              DefaultTTL: 0
+              ForwardedValues:
+                Headers:
+                  - "Accept"
+                  - "Referer"
+                  - "Authorization"
+                  - "Content-Type"
+                QueryString: 'true'
+                Cookies:
+                  Forward: none
+              ViewerProtocolPolicy: https-only
+              PathPattern: api/*
+          # If using custom domain, pass domain and SSL certifica arn here
+          #Aliases:
+          #  - <DOMAIN :eg acme.foobarbaz.com>
+          #ViewerCertificate:
+          #  AcmCertificateArn: <CERTIFICATE-ARN>
+          #  SslSupportMethod: sni-only

@@ -1,0 +1,92 @@
+.color-primary-0 { color: #469B3D }
+.color-primary-1 { color: #A2DA9C }
+.color-primary-2 { color: #71BD69 }
+.color-primary-3 { color: #277B1E }
+.color-primary-4 { color: #0E5706 }
+
+body {
+  background-color: #0E5706;
+}
+
+.App {
+  text-align: center;
+  background-color: #0E5706;
+}
+
+.App-logo {
+  animation: App-logo-spin infinite 20s linear;
+  height: 80px;
+}
+
+.App-header {
+  background-color: #469B3D;
+  height: 150px;
+  padding: 20px;
+  color: #A2DA9C;
+}
+
+.App-title {
+  font-size: 1.5em;
+  color: #A2DA9C;
+}
+
+h1 {
+  color: #A2DA9C;
+}
+
+pre {
+  text-align: left;
+}
+
+p {
+  color: #469B3D;
+}
+
+.App-intro {
+  font-size: large;
+  height: 40em;
+  margin-left: 10em;
+  margin-right: 10em;
+}
+
+@keyframes App-logo-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.text-entry {
+  border-color: #0E5706;
+  border-width: 0.2em;
+  width: 60%;
+  height: 20em;
+  -webkit-border-radius: 5px;
+  -moz-border-radius: 5px;
+  border-radius: 5px;
+  font-size: 1em;
+  color: #277B1E;
+}
+
+.buttons {
+  margin-top:1em;
+  margin-bottom:1em;
+}
+
+.launch-button {
+  border-color: #0E5706;
+  color: #0E5706;
+  background-color: #A2DA9C;
+  font-size: 2em;
+  -webkit-border-radius: 5px;
+  -moz-border-radius: 5px;
+  border-radius: 5px;
+  cursor:pointer;
+}
+
+.launched-animation {
+  height: 10em;
+  animation: App-logo-spin infinite 3s linear;
+}
+
+.loading {
+  color: #A2DA9C;
+}
